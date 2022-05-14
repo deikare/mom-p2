@@ -1,0 +1,45 @@
+param N_mines := 2;
+param N_powerhouses := 2;
+param N_mid := 2;
+param N_trains := 91;
+param N_wag_each := 31;
+param N_wag_total := 2821;
+
+param wagon_max_capacity := 20;
+param L := 620;
+
+param each_train_cost := 6448;
+param each_wagon_cost := 171;
+
+param each_km_cost := 0.11;
+
+param kappa := 1000;
+param theta := 80;
+
+param K:	1	2:=
+	1	251	198
+	2	129	239;
+
+param M:	1	2:=
+	1	133	240
+	2	128	185;
+
+param R:=	1	505
+	2	516;
+
+param P:=	1	24205
+	2	21700;
+
+param D:=	1	17491
+	2	17466;
+
+param F:	1	2:=
+	1	28	32
+	2	29	21;
+	
+param G:	1	2:=
+	1	23	17
+	2	22	21;
+
+param C:=	1	45
+	2	46;

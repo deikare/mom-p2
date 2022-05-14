@@ -1,25 +1,21 @@
 #======================================================================
-param Model symbolic := "Sieciowe_produkcja_dystrybucja";
-param FileCSV symbolic := "Wyniki_symulacji.csv";
+param N_mines;
+param N_powerhouses;
+param N_mid;
+param N_trains;
+param N_wag_each;
+param N_wag_total;
 
-#======================================================================
-param N_mines := 2;
-param N_powerhouses := 2;
-param N_mid := 2;
-param N_trains := 45 + 46;
-param N_wag_each := 31;
-param N_wag_total := N_trains * N_wag_each;
+param wagon_max_capacity;
+param L;
 
-param wagon_max_capacity := 20;
-param L := N_wag_each * wagon_max_capacity;
+param each_train_cost;
+param each_wagon_cost;
 
-param each_train_cost := 6448;
-param each_wagon_cost := 171;
+param each_km_cost;
 
-param each_km_cost := 0.11;
-
-param kappa := 1/0.001;
-param theta := N_mines * N_mid * wagon_max_capacity;
+param kappa;
+param theta;
 
 #======================================================================
 set Trains := 1..N_trains;
@@ -40,31 +36,6 @@ param D {Powerhouses} >= 0;
 param F {Mines, Mids} >= 0;
 param G {Mids, Powerhouses} >= 0;
 param C {Mids} >= 0;
-
-#======================================================================
-table T_K IN "CSV" "K.csv":
-	[m, o], K~K;
-	
-table T_M IN "CSV" "M.csv":
-	[o, p], M~M;
-	
-table T_R IN "CSV" "R.csv":
-	[m], R~R;
-	
-table T_P IN "CSV" "P.csv":
-	[m], P~P;
-	
-table T_D IN "CSV" "D.csv":
-	[p], D~D;
-	
-table T_F IN "CSV" "F.csv":
-	[m, o], F~F;
-	
-table T_G IN "CSV" "G.csv":
-	[o, p], G~G;
-	
-table T_C IN "CSV" "C.csv":
-	[o], C~C;
 
 #======================================================================
 var n {Mines} >= 0;
