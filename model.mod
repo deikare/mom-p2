@@ -100,7 +100,7 @@ subject to
 		wagon_cost = each_wagon_cost * (sum {i in Trains} (sum {j in Wagons} q[i, j]));
 		
 	Delivery_cost:
-		wagon_cost = each_km_cost * (sum {o in Mids} ((sum {m in Mines} (K[m, o] * (sum {i in Trains} (sum {j in Wagons} l[i, j, m, o])))) + (sum {p in Powerhouses} (M[o, p] * (sum {i in Trains} (sum {j in Wagons} r[i, j, o, p]))))));
+		delivery_cost = each_km_cost * (sum {o in Mids} ((sum {m in Mines} (K[m, o] * (sum {i in Trains} (sum {j in Wagons} l[i, j, m, o])))) + (sum {p in Powerhouses} (M[o, p] * (sum {i in Trains} (sum {j in Wagons} r[i, j, o, p]))))));
 		
 	Max_n{m in Mines}:
 		n[m] <= P[m];
@@ -147,22 +147,22 @@ subject to
 	s_r_connection{p in Powerhouses}:
 		s[p] = sum {o in Mids} (sum {i in Trains} (sum {j in Wagons} r[i, j, o, p]));
 
-	#d_l_connection_1{i in Trains, m in Mines, o in Mids}:
-	#	d[i, m, o] <= kappa * (sum {j in Wagons} l[i, j, m, o]);
+	d_l_connection_1{i in Trains, m in Mines, o in Mids}:
+		d[i, m, o] <= kappa * (sum {j in Wagons} l[i, j, m, o]);
 		
-	#d_l_connection_2{i in Trains, m in Mines, o in Mids}:
-	#	L * d[i, m, o] >= sum {j in Wagons} l[i, j, m, o];
+	d_l_connection_2{i in Trains, m in Mines, o in Mids}:
+		L * d[i, m, o] >= sum {j in Wagons} l[i, j, m, o];
 		
-	#e_r_connection_1{i in Trains, o in Mids, p in Powerhouses}:
-	#	e[i, o, p] <= kappa * (sum {j in Wagons} r[i, j, o, p]);
+	e_r_connection_1{i in Trains, o in Mids, p in Powerhouses}:
+		e[i, o, p] <= kappa * (sum {j in Wagons} r[i, j, o, p]);
 		
-	#e_r_connection_2{i in Trains, o in Mids, p in Powerhouses}:
-	#	L * e[i, o, p] >= sum {j in Wagons} r[i, j, o, p];
+	e_r_connection_2{i in Trains, o in Mids, p in Powerhouses}:
+		L * e[i, o, p] >= sum {j in Wagons} r[i, j, o, p];
 		
-	#q_l_connection_1{i in Trains, j in Wagons}:
-	#	q[i, j] <= kappa * (sum {m in Mines} (sum {o in Mids} l[i, j, m, o]));
+	q_l_connection_1{i in Trains, j in Wagons}:
+		q[i, j] <= kappa * (sum {m in Mines} (sum {o in Mids} l[i, j, m, o]));
 		
-	#q_l_connection_2{i in Trains, j in Wagons}:
-	#	theta * q[i, j] >= sum {m in Mines} (sum {o in Mids} l[i, j, m, o]);
+	q_l_connection_2{i in Trains, j in Wagons}:
+		theta * q[i, j] >= sum {m in Mines} (sum {o in Mids} l[i, j, m, o]);
 		
 	
