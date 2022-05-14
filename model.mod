@@ -6,24 +6,17 @@ param FileCSV symbolic := "Wyniki_symulacji.csv";
 param N_mines := 2;
 param N_powerhouses := 2;
 param N_mid := 2;
-param N_trains := 45 + 46;
+
 param N_wag_each := 31;
-param N_wag_total := N_trains * N_wag_each;
 
 param wagon_max_capacity := 20;
-param L := N_wag_each * wagon_max_capacity;
 
 param each_train_cost := 6448;
 param each_wagon_cost := 171;
 
 param each_km_cost := 0.11;
 
-param kappa := 1/0.001;
-param theta := N_mines * N_mid * wagon_max_capacity;
-
 #======================================================================
-set Trains := 1..N_trains;
-set Wagons := 1..N_wag_each;
 set Mines := 1..N_mines;
 set Mids := 1..N_mid;
 set Powerhouses := 1..N_powerhouses;
@@ -67,17 +60,13 @@ table T_C IN "CSV" "C.csv":
 	[o], C~C;
 
 #======================================================================
-var n {Mines} >= 0;
+var n {Mines} >= 0; #ile ton wyprodukowano w m-tej kopalni
 
-var l {Trains, Wagons, Mines, Mids} >= 0;
-var r {Trains, Wagons, Mids, Powerhouses} >= 0;
-var q {Trains, Wagons} binary;
+var f {Mines, Mids, Powerhouses} >= 0; #przep³yw ton wêgla m -> o -> p
+var w {Mines, Mids, Powerhouses} integer;  #ile u¿ytych wagonów
+var t {Mines, Mids, Powerhouses} integer; #ile u¿ytych poci¹gów
 
-var x {Trains} binary;
-var d {Trains, Mines, Mids} binary;
-var e {Trains, Mids, Powerhouses} binary;
-
-var s {Powerhouses} >= 0;
+var s {Powerhouses} >= 0; #ile ton dostarczono do p-tej elektrowni
 
 var mining_cost >= 0;
 var train_cost >= 0;
@@ -94,75 +83,43 @@ subject to
 		mining_cost = sum {m in Mines} (n[m] * R[m]);
 		
 	Train_cost:
-		train_cost = each_train_cost * (sum {i in Trains} x[i]);
+		train_cost = each_train_cost * (sum {m in Mines} (sum {o in Mids} (sum {p in Powerhouses} t[m, o, p])));
 		
 	Wagon_cost:
-		wagon_cost = each_wagon_cost * (sum {i in Trains} (sum {j in Wagons} q[i, j]));
+		wagon_cost = each_wagon_cost * (sum {m in Mines} (sum {o in Mids} (sum {p in Powerhouses} w[m, o, p])));
 		
 	Delivery_cost:
-		wagon_cost = each_km_cost * (sum {o in Mids} ((sum {m in Mines} (K[m, o] * (sum {i in Trains} (sum {j in Wagons} l[i, j, m, o])))) + (sum {p in Powerhouses} (M[o, p] * (sum {i in Trains} (sum {j in Wagons} r[i, j, o, p]))))));
+		wagon_cost = each_km_cost * (sum {o in Mids} ((sum {m in Mines} (K[m, o] * (sum {p in Powerhouses} f[m, o, p]))) + (sum {p in Powerhouses} (M[o, p] * (sum {m in Mines} f[m, o, p])))));
 		
 	Max_n{m in Mines}:
 		n[m] <= P[m];
 		
 	Min_s{p in Powerhouses}:
 		s[p] >= D[p];
-	
-	Max_l{i in Trains, j in Wagons, m in Mines, o in Mids}:
-		l[i, j, m, o] <= wagon_max_capacity;
 		
-	Max_r{i in Trains, j in Wagons, o in Mids, p in Powerhouses}:
-		r[i, j, o, p] <= wagon_max_capacity;
-	
-	Each_train_once_in{i in Trains}:
-		sum {m in Mines} (sum {o in Mids} d[i, m, o]) <= 1;
+	Min_w{m in Mines, o in Mids, p in Powerhouses}:
+		w[m, o, p] >= 0;
 		
-	d_e_connection{i in Trains, o in Mids}:
-		(sum {m in Mines} d[i, m, o]) = (sum {p in Powerhouses} e[i, o, p]);
+	Min_t{m in Mines, o in Mids, p in Powerhouses}:
+		t[m, o, p] >= 0;
 		
-	#Each_train_once_out{i in Trains}:
-	#	sum {o in Mids} (sum {p in Powerhouses} e[i, o, p]) <= 1;
+	f_w_connection{m in Mines, o in Mids, p in Powerhouses}:
+		wagon_max_capacity * w[m, o, p] >= f[m, o, p];
 		
-	Max_d_in{m in Mines, o in Mids}:
-		sum {i in Trains} d[i, m, o] <= F[m, o];
+	w_t_connection{m in Mines, o in Mids, p in Powerhouses}:
+		N_wag_each * t[m, o, p] >= w[m, o, p];
 		
-	Max_d_overall{o in Mids}:
-		sum {m in Mines} (sum {i in Trains} d[i, m, o]) <= C[o];
+	Max_from_m_to_o{m in Mines, o in Mids}:
+		sum {p in Powerhouses} t[m, o, p] <= F[m, o];
 		
-	Max_d_out{o in Mids, p in Powerhouses}:
-		sum {i in Trains} e[i, o, p] <= G[o, p];
+	Max_through_o{o in Mids}:
+		sum {m in Mines} (sum {p in Powerhouses} t[m, o, p]) <= C[o];
 		
-	mid_flow{o in Mids}:
-		sum {i in Trains} (sum {m in Mines} d[i, m, o]) = sum {i in Trains} (sum {p in Powerhouses} e[i, o, p]);
+	Max_from_o_to_p{o in Mids, p in Powerhouses}:
+		sum {m in Mines} t[m, o, p] <= G[o, p];
 		
-	x_d_connection{i in Trains}:
-		x[i] = sum {m in Mines} (sum {o in Mids} d[i, m, o]);
+	n_f_connection{m in Mines}:
+		n[m] = sum {o in Mids} (sum {p in Powerhouses} f[m, o, p]);
 		
-	Mining{m in Mines}:
-		n[m] = sum {o in Mids} (sum {i in Trains} (sum {j in Wagons} l[i, j, m, o]));
-		
-	l_r_connection{i in Trains, j in Wagons, o in Mids}:
-		sum {m in Mines} l[i, j, m, o] = sum {p in Powerhouses} r[i, j, o, p];
-		
-	s_r_connection{p in Powerhouses}:
-		s[p] = sum {o in Mids} (sum {i in Trains} (sum {j in Wagons} r[i, j, o, p]));
-
-	#d_l_connection_1{i in Trains, m in Mines, o in Mids}:
-	#	d[i, m, o] <= kappa * (sum {j in Wagons} l[i, j, m, o]);
-		
-	#d_l_connection_2{i in Trains, m in Mines, o in Mids}:
-	#	L * d[i, m, o] >= sum {j in Wagons} l[i, j, m, o];
-		
-	#e_r_connection_1{i in Trains, o in Mids, p in Powerhouses}:
-	#	e[i, o, p] <= kappa * (sum {j in Wagons} r[i, j, o, p]);
-		
-	#e_r_connection_2{i in Trains, o in Mids, p in Powerhouses}:
-	#	L * e[i, o, p] >= sum {j in Wagons} r[i, j, o, p];
-		
-	#q_l_connection_1{i in Trains, j in Wagons}:
-	#	q[i, j] <= kappa * (sum {m in Mines} (sum {o in Mids} l[i, j, m, o]));
-		
-	#q_l_connection_2{i in Trains, j in Wagons}:
-	#	theta * q[i, j] >= sum {m in Mines} (sum {o in Mids} l[i, j, m, o]);
-		
-	
+	f_s_connection{p in Powerhouses}:
+		s[p] = sum {m in Mines}(sum {o in Mids} f[m, o, p]);
